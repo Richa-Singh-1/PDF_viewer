@@ -1,0 +1,54 @@
+/*eslint-disable*/
+import { IonApp, IonButton, IonContent, IonPage } from '@ionic/react';
+import React, { useEffect } from 'react';
+import { Plugins } from '@capacitor/core';
+import { Directory } from '@capacitor/filesystem';
+import { Http } from '@capacitor-community/http';
+import { File } from "@ionic-native/file";
+import { BASE64 } from './file';
+const App: React.FC = () => {
+
+  const { Browser } = Plugins;
+
+  const downloadOpenusingFile = async () => {
+    const options = {
+      url: 'http://localhost:8090/',
+      filePath: `download_${new Date().getTime()}.pdf`,
+      fileDirectory: Directory.Documents,
+      // Optional
+      method: 'GET',
+    };
+
+    const response = await Http.downloadFile(options);
+    console.log('res', response);
+    window['PreviewAnyFile'].previewPath(
+      win => {
+        if (win == "SUCCESS") {
+          console.log('success')
+        } else if (win == "CLOSING") {
+          console.log('closing')
+        } else if (win == "NO_APP") {
+          console.log('no suitable app to open the file (mainly will appear on android')
+        } else {
+          console.log('error')
+        }
+      },
+      error => console.error("open failed", error),
+      response.path,
+    );
+  }
+
+  return (
+
+    <IonApp>
+      <IonPage>
+        <div style={{ height: '90vh' }}>
+          <div style={{ height: '300px', backgroundColor: 'red' }}>Header</div>
+          <IonButton onClick={downloadOpenusingFile}>Download and Open </IonButton>
+        </div>
+      </IonPage>
+    </IonApp>
+  );
+};
+
+export default App;
