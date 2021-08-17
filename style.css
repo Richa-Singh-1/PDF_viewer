@@ -1,0 +1,17 @@
+body {
+    margin: 0;
+    background-color: wheat;
+}
+nav{
+    height:80px;
+    margin-top: 30px;
+    border-bottom: 1px solid;
+}
+
+button{
+    background-color: white;
+    color:grey;
+    border: 1px solid black;
+    border-radius: 4px;
+    margin-left: 20px;
+}

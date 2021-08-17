@@ -1,0 +1,7 @@
+{
+  "name": "pdf",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react"
+}
