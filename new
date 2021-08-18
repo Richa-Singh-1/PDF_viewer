@@ -2,7 +2,7 @@
 import { IonApp, IonButton, IonContent, IonPage } from '@ionic/react';
 import React, { useEffect } from 'react';
 import { Plugins } from '@capacitor/core';
-import { Directory } from '@capacitor/filesystem';
+import { Directory, Filesystem } from '@capacitor/filesystem';
 import { Http } from '@capacitor-community/http';
 import { File } from "@ionic-native/file";
 import { BASE64 } from './file';
@@ -11,31 +11,48 @@ const App: React.FC = () => {
   const { Browser } = Plugins;
 
   const downloadOpenusingFile = async () => {
-    const options = {
-      url: 'http://localhost:8090/',
-      filePath: `download_${new Date().getTime()}.pdf`,
-      fileDirectory: Directory.Documents,
-      // Optional
-      method: 'GET',
-    };
+    try {
+      const { files } = await Filesystem.readdir({ directory: Directory.Documents, path: '/' });
+      console.log('isFolder', files);
 
-    const response = await Http.downloadFile(options);
-    console.log('res', response);
-    window['PreviewAnyFile'].previewPath(
-      win => {
-        if (win == "SUCCESS") {
-          console.log('success')
-        } else if (win == "CLOSING") {
-          console.log('closing')
-        } else if (win == "NO_APP") {
-          console.log('no suitable app to open the file (mainly will appear on android')
-        } else {
-          console.log('error')
-        }
-      },
-      error => console.error("open failed", error),
-      response.path,
-    );
+      if (files?.length && files.indexOf('pwm') > -1) {
+        console.log('Deleting file and folder');
+        // await Filesystem.deleteFile({
+        //   path: 'pwm/download.pdf',
+        //   directory: Directory.Documents,
+        // });
+        await Filesystem.rmdir({ directory: Directory.Documents, path: 'pwm' ,recursive:true});
+      }
+      console.log('Making folder');
+      await Filesystem.mkdir({ directory: Directory.Documents, path: 'pwm' });
+      const options = {
+        url: 'http://localhost:8090/',
+        filePath: `pwm/download.pdf`,
+        fileDirectory: Directory.Documents,
+        // Optional
+        method: 'GET',
+      };
+
+      const response = await Http.downloadFile(options);
+      console.log('res', response);
+      window['PreviewAnyFile'].previewPath(
+        win => {
+          if (win == "SUCCESS") {
+            console.log('success')
+          } else if (win == "CLOSING") {
+            console.log('closing')
+          } else if (win == "NO_APP") {
+            console.log('no suitable app to open the file (mainly will appear on android')
+          } else {
+            console.log('error')
+          }
+        },
+        error => console.error("open failed", error),
+        response.path,
+      );
+    } catch (e) {
+      console.error(e);
+    }
   }
 
   return (
