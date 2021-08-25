@@ -4,37 +4,49 @@ import React, { useEffect } from 'react';
 import { Plugins } from '@capacitor/core';
 import { Directory, Filesystem } from '@capacitor/filesystem';
 import { Http } from '@capacitor-community/http';
-import { File } from "@ionic-native/file";
 import { BASE64 } from './file';
 const App: React.FC = () => {
 
   const { Browser } = Plugins;
 
-  const downloadOpenusingFile = async () => {
+  const downloadOpenusingFile = async (fileName = 'download') => {
     try {
+      let fileExists = false;
+      let fileUri = '';
       const { files } = await Filesystem.readdir({ directory: Directory.Documents, path: '/' });
       console.log('isFolder', files);
 
       if (files?.length && files.indexOf('pwm') > -1) {
-        console.log('Deleting file and folder');
-        // await Filesystem.deleteFile({
-        //   path: 'pwm/download.pdf',
-        //   directory: Directory.Documents,
-        // });
-        await Filesystem.rmdir({ directory: Directory.Documents, path: 'pwm' ,recursive:true});
+        const { files: pwmFiles } = await Filesystem.readdir({ directory: Directory.Documents, path: '/pwm' });
+        console.log('pwmFiles', pwmFiles);
+        if (pwmFiles.includes(`${fileName}.pdf`)) {
+          const { uri } = await Filesystem.getUri({ directory: Directory.Documents, path: `/pwm/${fileName}.pdf` });
+          console.log('File Exists ----', uri);
+          fileUri = uri;
+          fileExists = true;
+        }
       }
-      console.log('Making folder');
-      await Filesystem.mkdir({ directory: Directory.Documents, path: 'pwm' });
-      const options = {
-        url: 'http://localhost:8090/',
-        filePath: `pwm/download.pdf`,
-        fileDirectory: Directory.Documents,
-        // Optional
-        method: 'GET',
-      };
 
-      const response = await Http.downloadFile(options);
-      console.log('res', response);
+      if (!fileExists) {
+        // Remove File
+        // await Filesystem.rmdir({ directory: Directory.Documents, path: 'pwm' ,recursive:true});
+
+        console.log('Making folder');
+        await Filesystem.mkdir({ directory: Directory.Documents, path: 'pwm' });
+        const options = {
+          url: 'http://localhost:8090/',
+          filePath: `pwm/download.pdf`,
+          fileDirectory: Directory.Documents,
+          // Optional
+          method: 'GET',
+        };
+
+        const response = await Http.downloadFile(options);
+        console.log('res', response);
+        fileUri = response.path;
+      }
+
+
       window['PreviewAnyFile'].previewPath(
         win => {
           if (win == "SUCCESS") {
@@ -48,7 +60,7 @@ const App: React.FC = () => {
           }
         },
         error => console.error("open failed", error),
-        response.path,
+        fileUri
       );
     } catch (e) {
       console.error(e);
@@ -61,7 +73,7 @@ const App: React.FC = () => {
       <IonPage>
         <div style={{ height: '90vh' }}>
           <div style={{ height: '300px', backgroundColor: 'red' }}>Header</div>
-          <IonButton onClick={downloadOpenusingFile}>Download and Open </IonButton>
+          <IonButton onClick={() => downloadOpenusingFile()}>Download and Open </IonButton>
         </div>
       </IonPage>
     </IonApp>
